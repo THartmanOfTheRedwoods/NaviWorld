@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
@@ -20,9 +21,13 @@ public class Main extends ApplicationAdapter {
     private SpriteBatch batch;
     private Texture tileTexture;
     private Texture playerTexture;
+    private TextureRegion[][] playerFrames;
 
     private Vector2 playerPosition;
     private float playerSpeed = 200f; // Speed in pixels per second
+    private float stateTime = 0f;
+    private int currentDirection = 2; // Default to facing down (row 2)
+    private boolean isMoving = false;
 
     @Override
     public void create() {
@@ -39,6 +44,18 @@ public class Main extends ApplicationAdapter {
         //tileTexture = new Texture("brick.png");
         tileTexture = new Texture("honeycomb.png");
         playerTexture = new Texture("player.png");
+
+        // Split the sprite-sheet into frames
+        TextureRegion[][] tmp = TextureRegion.split(playerTexture,
+            playerTexture.getWidth() / 3,  // 3 columns
+            playerTexture.getHeight() / 4 // 4 rows
+        );
+        playerFrames = new TextureRegion[4][3];
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 3; j++) {
+                playerFrames[i][j] = tmp[i][j];
+            }
+        }
 
         // Initialize player position
         playerPosition = new Vector2(WORLD_WIDTH * TILE_SIZE / 2f, WORLD_HEIGHT * TILE_SIZE / 2f);
@@ -75,8 +92,22 @@ public class Main extends ApplicationAdapter {
             }
         }
 
-        // Render the player
-        batch.draw(playerTexture, playerPosition.x - TILE_SIZE / 2f, playerPosition.y - TILE_SIZE / 2f, TILE_SIZE, TILE_SIZE);
+        // Update animation time if moving
+        if (isMoving) {
+            stateTime += Gdx.graphics.getDeltaTime();
+        }
+
+        // Get current animation frame
+        int frameIndex = (int)(stateTime * 10) % 3; // 10 is animation speed factor
+        TextureRegion currentFrame = playerFrames[currentDirection][frameIndex];
+
+        // Render player with correct animation frame
+        batch.draw(currentFrame,
+            playerPosition.x - TILE_SIZE / 2f,
+            playerPosition.y - TILE_SIZE / 2f,
+            TILE_SIZE,
+            TILE_SIZE
+        );
 
         // End drawing
         batch.end();
@@ -85,21 +116,29 @@ public class Main extends ApplicationAdapter {
     private void handleInput() {
         float deltaTime = Gdx.graphics.getDeltaTime();
         Vector2 movement = new Vector2();
+        isMoving = false;
 
         if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
             movement.y += 1;
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-            movement.y -= 1;
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            movement.x -= 1;
+            currentDirection = 0; // Up (row 0)
+            isMoving = true;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             movement.x += 1;
+            currentDirection = 1; // Right (row 1)
+            isMoving = true;
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+            movement.y -= 1;
+            currentDirection = 2; // Down (row 2)
+            isMoving = true;
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+            movement.x -= 1;
+            currentDirection = 3; // Left (row 3)
+            isMoving = true;
         }
 
-        // Normalize diagonal movement
         if (movement.len2() > 0) {
             movement.nor().scl(playerSpeed * deltaTime);
             playerPosition.add(movement);
