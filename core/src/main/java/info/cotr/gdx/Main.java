@@ -43,7 +43,8 @@ public class Main extends ApplicationAdapter {
         // Load textures
         //tileTexture = new Texture("brick.png");
         tileTexture = new Texture("honeycomb.png");
-        playerTexture = new Texture("player.png");
+        // playerTexture = new Texture("player.png");
+        playerTexture = new Texture("BEESprite.png");
 
         // Split the sprite-sheet into frames
         TextureRegion[][] tmp = TextureRegion.split(playerTexture,
