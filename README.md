@@ -34,3 +34,4 @@ For example, `core:clean` removes `build` folder only from the `core` project.
 
 # CREDITS
 [Trevor](https://)
+[James](https://)
